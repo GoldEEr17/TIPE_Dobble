@@ -1,0 +1,6 @@
+Petit .txt pour pouvoir suivre et globalement noté sans forcément trop de détails ce qui est fait au fur à mesure.
+
+
+24 Mai
+
+3h au CDI à 2. Fait programme pour distinguer les symboles du fond de l'image (Matéo) suffisament bien. Fait 1ère méthode pour délimiter la zone de 1 symbole par un rectangle (Léo)
