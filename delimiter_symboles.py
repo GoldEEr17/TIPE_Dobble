@@ -21,21 +21,21 @@ J'ai aussi compris qu'en fait tu ne testais même pas la couleur de la case mais
 
 
 
-
-os.chdir('F:\TIPE Dobble clé')
+os.chdir('U:\leo.jacquiot\Mes documents\TIPE Dobble')
+# os.chdir('F:\TIPE Dobble clé')
 # os.chdir ('U:\mateo.brun')
 
 M1 = imread('dobble1.png')
-# M2 = imread('dobble2.png')
-# M3 = imread('dobble3.png')
-# M4 = imread('dobble4.png')
-# M5 = imread('dobble5.png')
+M2 = imread('dobble2.png')
+M3 = imread('dobble3.png')
+M4 = imread('dobble4.png')
+M5 = imread('dobble5.png')
 
 lenM1 = M1.shape
-# lenM2 = M2.shape
-# lenM3 = M3.shape
-# lenM4 = M4.shape
-# lenM5 = M5.shape
+lenM2 = M2.shape
+lenM3 = M3.shape
+lenM4 = M4.shape
+lenM5 = M5.shape
 
 
 def affiche1(M) :
@@ -126,9 +126,9 @@ def zone(M) :
                 if test_couleur(M[y,z]) :
                     test +=1
             if test>=4 :
-                A[i,j] = 1
+                A[i,j] = [0,1,0,1]
             else :
-                A[i,j] = 0
+                A[i,j] = [0,0,0,0]
     return (disque(A))
 
 
@@ -156,12 +156,24 @@ def zone(M) :
 
 
 
-affiche2(M1)
+# affiche2(M1)
 # affiche2(M2)
 # affiche2(M3)
 # affiche2(M4)
 # affiche2(M5)
 
 
+# print(M4)
+# print(M4.shape)
 
-M_import1 = zone(M1)
+D1 = zone(M1)
+D4 = zone(M4)
+# print(D4)
+# affiche1(D4)
+
+save('D1.npy',D1)
+save('D4.npy',D4)
+
+
+
+
