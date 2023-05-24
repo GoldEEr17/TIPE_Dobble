@@ -1,0 +1,18 @@
+Petit .txt pour pouvoir suivre et clarifier comment s'organiser (ou ranger ses fichiers...) ensemble et/ou individuellement. Aussi des principes et tips pour faciliter le partage de code clair et autres.
+
+
+
+STOCK DES FICHIERS
+
+Lieux existants :
+- Github : toujours le plus à jour, de préférence toujours publier ses modifs sur GitHub juste après en avoir fait (en fin de session, c'est rapide :) )
+- Session lycée Léo
+- Session lycée Matéo
+- Clé USB (possession Léo, peut être partagée et éventuellement servir de transfert, même si autant utiliser GitHub)
+- Ordi Matéo
+- Ordi Léo 
+
+De manière générale, je pense que pour éviter de se perdre à avoir nos fichiers un peu partout, je pense qu'il est préférable que le 'seul' lieu de sauvegarde soit en ligne ici, et que quand on code on
+récup (copier/coller ou bien download) le fichier ici, qu'on code ensuite sur notre IDE (comme Pyzo) puis qu'on commit sur GitHub les fichiers modifiés (en fin de session). (par ailleurs : GitHub sauvegarde 
+l'historique de toutes les versions publiées)
+Mais avoir des copies locales temporaires sera de toute façon plus ou moins nécessaire comme on doit pouvoir accéder aux fichiers images ou importer des résultats de toute façon.
