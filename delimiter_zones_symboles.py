@@ -2,7 +2,7 @@ from pylab import *
 import os
 import random
 
-print(os.listdir())
+# print(os.listdir())
 
 
 
@@ -54,12 +54,12 @@ def matrice_random(): #carré 100x100
 def affiche(MATRICE):
     figure()
     # axis('off')
-    imshow(MATRICE,interpolation='nearest',cmap='BrBG') # ou binary pour blanc=0 noir = 1
+    imshow(MATRICE) # ou binary pour blanc=0 noir = 1 # ou BrBG
     show()
 
 
 
-affiche(matrice_random())
+# affiche(matrice_random())
 
 
 
@@ -88,12 +88,23 @@ affiche(matrice_random())
 
 
 
-
 def delimite_apd_point(M,point_case) :
+
+
+    # On convertit bien la matrice à un format (p,q) dont la valeur contenu est soit 1 (symbole) soit 0(rien).
+    # Actuellement, le format RGBA fournit contient le 1 en position 1 (image en vert). En fait : plutôt gérer ceci avant d'entrer dans cette fonction, comme
+    # ça on fournit juste du format (p,q) avec des 1 et des 0 et tout est clair
+    if len(M.shape) > 2 and M.shape[2] == 4 :
+        M = M[:,:,1]
 
 
     p, q = M.shape
     i0,j0 = point_case
+    # print(i0,j0)
+    # M[i0,j0] = 1/2
+    # figure()
+    # imshow(M)
+    # show()
 
     # Contour est une liste de 4 couples donnant les 4 coins du rectangle/carré
     # On pourrait aussi faire un carré de centre bidule ou rectangle de longueur/largeur et de centre machun, bof pour étendre
@@ -104,7 +115,6 @@ def delimite_apd_point(M,point_case) :
 
     def test_depasse() :
         for x,y in Contour.values() :
-            print(x,y)
             if x < 0 or x > p or y < 0 or y > q :
                 return True
         return False
@@ -114,21 +124,39 @@ def delimite_apd_point(M,point_case) :
 
 
     def b_gauche():
-        CONST = Contour['hg'][1]
-        debut = Contour['hg'][0]
-        fin = Contour['bg'][0]
+        CONST = Contour['hg'][0]
+        debut = Contour['hg'][1]
+        fin = Contour['bg'][1]
 
-        print("pré passage gauche")
         for k in range(debut,fin+1) :
-            print("1 passage gauche")
-            if M[k,CONST] == 1 :
+            if M[CONST,k] == 1 :
                 return True
         return False
 
 
     def b_droite():
-        CONST = Contour['hd'][1]
-        debut = Contour['hd'][0]
+        CONST = Contour['hd'][0]
+        debut = Contour['hd'][1]
+        fin = Contour['bd'][1]
+
+        for k in range(debut,fin+1) :
+            if M[CONST,k] == 1 :
+                return True
+        return False
+
+    def b_haut():
+        CONST = Contour['hg'][1]
+        debut = Contour['hg'][0]
+        fin = Contour['hd'][0]
+
+        for k in range(debut,fin+1) :
+            if M[k,CONST] == 1 :
+                return True
+        return False
+
+    def b_bas():
+        CONST = Contour['bg'][1]
+        debut = Contour['bg'][0]
         fin = Contour['bd'][0]
 
         for k in range(debut,fin+1) :
@@ -136,44 +164,25 @@ def delimite_apd_point(M,point_case) :
                 return True
         return False
 
-    def b_haut():
-        CONST = Contour['hg'][0]
-        debut = Contour['hg'][1]
-        fin = Contour['hd'][1]
-
-        for k in range(debut,fin+1) :
-            if M[k,CONST] == 1 :
-                return True
-        return False
-
-    def b_haut():
-        CONST = Contour['bg'][0]
-        debut = Contour['bg'][1]
-        fin = Contour['bd'][1]
-
-        for k in range(debut,fin+1) :
-            if M[k,CONST] == 1 :
-                return True
-        return False
 
 
 
 
+    while (not test_depasse()) and (b_gauche() or b_droite() or b_haut() or b_bas()) :
 
-
-    while (not test_depasse) and (b_gauche() or b_droite() or b_haut() or b_bas()) :
-
+        # print("entrée while")
+        # Il faut rajouter une prise en compte des bordures de l'image...
         if b_gauche() :
-            Contour['hg'][1] -= 1
-            Contour['bg'][1] -= 1
+            Contour['hg'][0] -= 1
+            Contour['bg'][0] -= 1
 
         if b_droite() :
-            Contour['hd'][1] += 1
-            Contour['bd'][1] += 1
+            Contour['hd'][0] += 1
+            Contour['bd'][0] += 1
 
         if b_haut() :
-            Contour['hg'][0] -= 1
-            Contour['hd'][0] -= 1
+            Contour['hg'][1] -= 1
+            Contour['hd'][1] -= 1
 
         if b_bas() :
             Contour['bg'][1] += 1
@@ -181,13 +190,15 @@ def delimite_apd_point(M,point_case) :
 
 
 
-    def afficher_resultat() :
+
+
+    def afficher_resultat() : # affiche la zone sélectionnée encadrée en rouge
 
         E = M.copy() # E pour encadrée : but = afficher image avec le cadre choisit
-        haut = Contour['hg'][0]
-        bas = Contour['bg'][0]
-        gauche = Contour['hg'][1]
-        droite = Contour['hd'][1]
+        haut = Contour['hg'][1]
+        bas = Contour['bg'][1]
+        gauche = Contour['hg'][0]
+        droite = Contour['hd'][0]
 
 
         for k in range(gauche,droite+1):
@@ -195,12 +206,11 @@ def delimite_apd_point(M,point_case) :
         for k in range(gauche,droite+1):
             E[k,bas] = 1/2
         for k in range(haut,bas+1):
-            E[k,gauche] = 1/2
+            E[gauche,k] = 1/2
         for k in range(haut,bas+1):
-            E[k,droite] = 1/2
+            E[droite,k] = 1/2
 
         affiche(E)
-
 
     afficher_resultat()
 
@@ -211,15 +221,30 @@ def delimite_apd_point(M,point_case) :
 
 
 
-from delimiter_symboles import M_import1
+# from delimiter_symboles.py import D4
+D4 = load('D4.npy')
+D4 = D4[:,:,1]
+# affiche(D4)
+
+# print(D4.shape)
+# delimite_apd_point(D4, (190,190))
+# delimite_apd_point(D4, (190,125))
+# delimite_apd_point(D4, (50,150))
+# delimite_apd_point(D4, (150,50))
+# delimite_apd_point(D4, (190,190))
+
+# il semblerait que x et y soit inversé ce qui est étrange
 
 
 
-M4 = matrice_random()
-M4[50,50] = 1
-affiche(M4)
+D1 = load('D1.npy')
+D1 = D1[:,:,1]
 
-delimite_apd_point(M4,(50,50))
+affiche(D1)
+
+delimite_apd_point(D1,(210,210))
+
+
 
 
 
