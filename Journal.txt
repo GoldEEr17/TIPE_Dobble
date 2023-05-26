@@ -4,3 +4,10 @@ Petit .txt pour pouvoir suivre et globalement noté sans forcément trop de dét
 24 Mai
 
 3h au CDI à 2. Fait programme pour distinguer les symboles du fond de l'image (Matéo) suffisament bien. Fait 1ère méthode pour délimiter la zone de 1 symbole par un rectangle (Léo)
+
+
+26 mai
+
+Commencer le tout début du code pour le réseau de neuronne. C'est le fichier "reseau_general" qui sera là pour héberger la classe "Reseau" qui gèrera tout un réseau de neuronnes de forme général avec le format "taille" en entrée (par exemple taille = [6,4,4,3] pour un réseau à 4 couches dont la première comporte 6 neuronnes, la deuxième 4, la troisième 4, la quatrième 3).
+Codé seulement la classe, la taille, sigmoide, les poids (liste de couples des matrices de poids et du vecteur colonne des biais), de la fonction (récursive) feedforward. Testés, tout ce début semble marché, syntaxe np.dot pour le produit matriciel.
+
