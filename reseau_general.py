@@ -2,18 +2,23 @@
 import numpy as np
 from time import time
 import random as random
+import pickle
 
 
 class Reseau():
-    def __init__(self,taille:[int],act_function='sigmoid'):
+    def __init__(self,taille:[int],act_function='sigmoid',input_parameters=None):
         self.taille = taille
         self.act_function = act_function
         # self.poids = [[]] + [ [ np.random.uniform(-3,3,(taille[i],taille[i-1])),  np.random.uniform(-2,2,(taille[i],1))  ]      for i in range(1,len(self.taille)) ]
         self.weights = [[]] + [np.random.uniform(-3,3,(self.taille[i],self.taille[i-1])) for i in range(1,len(self.taille))]
         self.biases = [[]] + [np.random.uniform(-2,2,(self.taille[i],1)) for i in range(1,len(self.taille))]
+        if not input_parameters is None :
+            self.weights = input_parameters[0]
+            self.biases = input_parameters[1]
 
         self.accuracy = -1
         self.total_generations = 0
+        self.total_duration = 0
         self.stored_dataset = []
 
 
@@ -45,15 +50,19 @@ class Reseau():
 
 
     #à corriger, et fonction de test à améliorer
-    # def evaluate_accuracy(self,data,do_print=False):
-    #     data = self.normalized(data)
-    #     for entree, sortie_attendue in data:
-    #         sortie = self.feedforward(entree)
-    #         correct_results = 0
-    #         if max(range(sortie.size), key=lambda i: sortie[i]) == max(range(sortie_attendue.size), key=lambda i: sortie_attendue[i]):
-    #             correct_results += 1
-    #     self.accuracy = correct_results / len(data)
-    #     if do_print==True : print(self.accuracy)
+    def evaluate_accuracy(self,data,do_print=False):
+        data = self.normalized(data)
+        correct_results = 0
+
+        for entree, sortie_attendue in data:
+            sortie = self.feedforward(entree)
+            smoothed_sortie = [0 if x<0.5 else 1   for x in sortie]
+            smoothed_sortie_attendue = [0 if x<0.5 else 1   for x in sortie_attendue]
+            if smoothed_sortie == smoothed_sortie_attendue :
+                correct_results += 1
+
+        self.accuracy = correct_results / len(data)
+        if do_print==True : print(self.accuracy)
 
     # def zeros_like_recursive(self,First):
     #     if isinstance(First,list):
@@ -131,20 +140,24 @@ class Reseau():
 
 
 
-    def apprendre(self,DATA:[ [[float],[float]] ],pas=10.0, data_shrink=1.0,data_number=None,precision=0,duration=999999,nb_generations=0,CHECK_PROPORTION=0.1):
+    def apprendre(self,DATA:[ [[float],[float]] ]=None,pas=10.0, data_shrink=1.0,data_number=None,precision=1.01,duration=999999,nb_generations=999999,CHECK_PROPORTION=0.1):
+        if DATA is None : DATA = self.stored_dataset
         if data_number is None : data_number = len(DATA)
-        gen_count,start_time,elapsed_time, DATA = 0,time(), 0, self.normalized(DATA)
+        gen_count,start_time,elapsed_time, DATA,nb_seconds = 0,time(), 0, self.normalized(DATA),0
         # self.normalized permet de s'assurer que tout soit de la forme de vecteur colonne
-        if precision == 0 : CHECK_PROPORTION = -1
+        # if precision == 0 : CHECK_PROPORTION = -1
 
         #rajouter la précision...
         def criteria_reached():
-            nonlocal gen_count
+            nonlocal gen_count, elapsed_time,nb_seconds
             # if np.random.random() <= CHECK_PROPORTION :
             #     self.evaluate_accuracy(DATA)
             gen_count += 1
             elapsed_time = time() - start_time
-            # manual stop^with interface ?
+            if int(elapsed_time) > nb_seconds : # évalue l'accuracy 1 fois seulement par seconde
+                nb_seconds = int(elapsed_time)
+                self.evaluate_accuracy(DATA)
+                print(f"accuracy à {nb_seconds}s : {self.accuracy}")
 
             return gen_count >= nb_generations or elapsed_time >= duration
 
@@ -168,8 +181,9 @@ class Reseau():
 
 
         # self.evaluate_accuracy(DATA)
-        self.total_generations += nb_generations
-        print(f'\nnb total générations : {self.total_generations}')
+        self.total_generations += gen_count
+        self.total_duration += nb_seconds
+        print(f'\nnb total générations : {self.total_generations} | durée : {elapsed_time:.0f}s')
 
 
 
@@ -207,11 +221,83 @@ my_DATA = [ [[0,0,1.0,1,0,0],[0.0,1,0]], [[1,1,0,0.,0,0],[1.,0,0]], [[0.,0,0,0,1
 
 # print(my_reseau.evaluate_accuracy(my_DATA,do_print=True))
 
-my_reseau.apprendre(my_DATA,nb_generations=3000,pas=10.0)
-my_reseau.apprendre(my_DATA,nb_generations=3000,pas=10.0)
+# my_reseau.evaluate_accuracy(my_DATA,do_print=True)
+# # my_reseau.apprendre(my_DATA,nb_generations=500,pas=10.0)
+# my_reseau.apprendre(my_DATA,duration=5,pas=10.0)
+#
+#
+# print(my_reseau.feedforward([0.,0.,1.,1.,0.,0.])) #ça marche!!!!
+#
+# print(my_reseau.feedforward([1,1,0,0,0,0]))
+# my_reseau.evaluate_accuracy(my_DATA,do_print=True)
 
 
-print(my_reseau.feedforward([0.,0.,1.,1.,0.,0.])) #ça marche!!!!
+# my_reseau.apprendre(my_DATA,duration=5,pas=10.0)
+# with open('1st_storage_test','wb') as file :
+#     pickle.dump(my_reseau.weights, file)
+#     pickle.dump(my_reseau.biases, file)
+#     pickle.dump(my_reseau, file)
 
-print(my_reseau.feedforward([1,1,0,0,0,0]))
+
+# with open('1st_storage_test','rb') as file :
+#     w_stored = pickle.load(file)
+#     b_stored = pickle.load(file)
+#     reseau_stored = pickle.load(file)
+#
+# opened_reseau1 = Reseau([6,4,4,3], input_parameters=[w_stored,b_stored])
+# opened_reseau2 = reseau_stored
+#
+# opened_reseau2.stored_dataset = my_DATA
+# opened_reseau2.apprendre(duration=15)
+#
+# with open('2nd_storage_test','wb') as file :
+#     pickle.dump(opened_reseau2,file)
+#
+#
+#
+# pass
+
+
+# with open('2nd_storage_test','rb') as file :
+#     opened_reseau3 = pickle.load(file)
+#
+# pass
+#
+# reseau_actuel = opened_reseau3
+# reseau_actuel.apprendre(duration=30)
+#
+
+def save(reseau) :
+    with open('test_latest_saved','wb') as file :
+        pickle.dump(reseau, file)
+
+def loaded() :
+    with open('test_latest_saved','rb') as file :
+        return pickle.load(file)
+
+
+## LEARNING PHASE
+if False :
+    with open('test_latest_saved','rb') as file :
+        reseau_actuel = pickle.load(file)
+
+    reseau_actuel.apprendre(duration=5*60)
+    # reseau_actuel.stored_dataset = my_DATA
+
+
+
+
+    with open('test_latest_saved','wb') as file :
+        pickle.dump(reseau_actuel,file)
+
+
+
+## CHECKING PHASE
+with open('test_latest_saved','rb') as file :
+    reseau_actuel = pickle.load(file)
+    pass
+
+
+print(reseau_actuel.feedforward(my_DATA[0][0]))
+
 
