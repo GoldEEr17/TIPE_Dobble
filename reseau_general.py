@@ -1,14 +1,15 @@
 
 import numpy as np
-from time import *
+from time import time
 import random
 import pickle
 
 
 class Reseau():
-    def __init__(self,taille:[int],act_function='sigmoid',input_parameters=None):
+    def __init__(self,taille:[int],act_function='sigmoid',input_parameters=None,stored_dataset=[]):
         self.taille = taille
         self.act_function = act_function
+        self.stored_dataset = stored_dataset
         self.weights = [[]] + [np.random.uniform(-3,3,(self.taille[i],self.taille[i-1])) for i in range(1,len(self.taille))]
         self.biases = [[]] + [np.random.uniform(-2,2,(self.taille[i],1)) for i in range(1,len(self.taille))]
         if not input_parameters is None :
@@ -19,7 +20,6 @@ class Reseau():
         self.average_cost = -1
         self.total_generations = 0
         self.total_duration = 0
-        self.stored_dataset = []
 
 
     def activation_function(self,t):
@@ -30,14 +30,14 @@ class Reseau():
         if self.act_function == 'sigmoid' :
             return np.exp(-t) / (1+np.exp(-t))**2
 
-    def normalized(self,DATA, for_data_set=True):
-        if for_data_set :
-            # if isinstance(DATA[-1][0], list) or len(DATA[-1][0].shape) != 2 :
-            for i in range(len(DATA)) :
-                DATA[i][0] = np.reshape(DATA[i][0],(-1,1)).astype(float)
-                DATA[i][1] = np.reshape(DATA[i][1],(-1,1)).astype(float)
+    def normalized(self,DATA):
+        # if isinstance(DATA[-1][0], list) or len(DATA[-1][0].shape) != 2 :
+        if isinstance(DATA[-1][0],np.ndarray) and len(DATA[-1][0].shape) == 2 : return DATA
+        for i in range(len(DATA)) :
+            DATA[i][0] = np.reshape(DATA[i][0],(-1,1)).astype(float)
+            DATA[i][1] = np.reshape(DATA[i][1],(-1,1)).astype(float)
 
-            return DATA
+        return DATA
 
     def shuffled_data(self,DATA,data_shrink,data_number):
         nb_elements = min(data_number, data_shrink*len(DATA),)
@@ -53,7 +53,10 @@ class Reseau():
         hours, minutes = minutes // 60, minutes % 60
         return f"{hours}h {minutes}min"
 
-    def evaluate_accuracy(self,data,do_print=False):
+    def evaluate_accuracy(self,data=None,do_print=False):
+        if data is None :
+            if len(self.stored_dataset) == 0 : raise Exception("pas de stored_dataset, impossible de calculer l'accuracy")
+            data = self.stored_dataset
         data = self.normalized(data)
         correct_results = 0
 
@@ -74,10 +77,10 @@ class Reseau():
             data = self.stored_dataset
         data = self.normalized(data)
 
-        total_cost = 0
+        total_cost = 0.0
         for entree,sortie_attendue in data :
             sortie = self.feedforward(entree)
-            for a_calc,a_att in zip(sortie,sortie_attendue) :
+            for a_calc,a_att in zip(sortie[1],sortie_attendue[1]) :
                 total_cost += (a_calc - a_att)**2
 
         average_cost = total_cost / len(data) / self.taille[-1]  # coût moyen par neuronne final par exemple
