@@ -1,7 +1,7 @@
 
 import numpy as np
-from time import time
-import random as random
+from time import *
+import random
 import pickle
 
 
@@ -16,6 +16,7 @@ class Reseau():
             self.biases = input_parameters[1]
 
         self.accuracy = -1
+        self.average_cost = -1
         self.total_generations = 0
         self.total_duration = 0
         self.stored_dataset = []
@@ -42,6 +43,16 @@ class Reseau():
         nb_elements = min(data_number, data_shrink*len(DATA),)
         return random.sample(DATA,nb_elements)
 
+    def string_duration(self,seconds):
+        seconds = int(seconds)
+        if seconds < 60:
+            return f"{seconds}s"
+        minutes, seconds = seconds // 60, seconds % 60
+        if minutes < 60:
+            return f"{minutes}min {seconds}s"
+        hours, minutes = minutes // 60, minutes % 60
+        return f"{hours}h {minutes}min"
+
     def evaluate_accuracy(self,data,do_print=False):
         data = self.normalized(data)
         correct_results = 0
@@ -55,6 +66,26 @@ class Reseau():
 
         self.accuracy = correct_results / len(data)
         if do_print==True : print(self.accuracy)
+
+
+    def evaluate_cost(self,data=None,do_print=False): # renvoie la moyenne des coûts C0 pour chaque exemple (i.e. somme des carrés des écarts de chaque neuronne de la dernière couche)
+        if data is None :
+            if self.stored_dataset == [] : raise Exception('pas de stored_dataset, impossible de calculer la précision')
+            data = self.stored_dataset
+        data = self.normalized(data)
+
+        total_cost = 0
+        for entree,sortie_attendue in data :
+            sortie = self.feedforward(entree)
+            for a_calc,a_att in zip(sortie,sortie_attendue) :
+                total_cost += (a_calc - a_att)**2
+
+        average_cost = total_cost / len(data) / self.taille[-1]  # coût moyen par neuronne final par exemple
+        self.average_cost = average_cost
+
+        if do_print == True :
+            print(f"le côut moyen par neuronne final par exemple est de {self.average_cost}")
+
 
     def feedforward(self,A_K:[float],J=1): # entrée A_K : vecteur colonne des activations de la couche K, précédent la couche suivante J, on va jusqu'à la dernière couche récursivement
         # if isinstance(A_K,list) or len(A_K.shape) !=2 : raise ValueError('PAS un vecteur colonne en entrée de feedforward')
@@ -75,7 +106,7 @@ class Reseau():
         while J < len(self.taille) :
             W_J = self.weights[J]
             B_J = self.biases[J]
-            Z_J = np.dot(W_J,A_K) + B_J  
+            Z_J = np.dot(W_J,A_K) + B_J
             A_K = self.activation_function(Z_J)
 
             all_A.append(A_K)
@@ -126,10 +157,6 @@ class Reseau():
         if data_number is None : data_number = len(DATA)
         gen_count,start_time,elapsed_time, DATA,nb_seconds = 0,time(), 0, self.normalized(DATA),0
         if duration == 999999 and nb_generations == 999999 : raise Exception("pas de fin d'apprentissage !")
-        # self.normalized permet de s'assurer que tout soit de la forme de vecteur colonne
-        # if precision == 0 : CHECK_PROPORTION = -1
-
-        #rajouter la précision...
         def criteria_reached():
             nonlocal gen_count, elapsed_time,nb_seconds
             # if np.random.random() <= CHECK_PROPORTION :
@@ -165,7 +192,7 @@ class Reseau():
         # self.evaluate_accuracy(DATA)
         self.total_generations += gen_count
         self.total_duration += nb_seconds
-        print(f'\nnb total générations : {self.total_generations} | durée : {elapsed_time:.0f}s')
+        print(f'\nnb générations faites : {gen_count} ({self.total_generations}) | durée : {self.string_duration(elapsed_time)}')
 
 
 
