@@ -3,6 +3,9 @@ import numpy as np
 from time import time
 import random
 import pickle
+import tkinter as tk
+from tkinter import ttk
+import ttkbootstrap as ttk
 
 
 class Reseau():
@@ -10,12 +13,14 @@ class Reseau():
         self.taille = taille
         self.act_function = act_function
         self.stored_dataset = stored_dataset
+        self.symbols = {} # dictionnaire associant à chaque symbole (écrit en string) son nombre de représentations dans data_set
         self.weights = [[]] + [np.random.uniform(-3,3,(self.taille[i],self.taille[i-1])) for i in range(1,len(self.taille))]
         self.biases = [[]] + [np.random.uniform(-2,2,(self.taille[i],1)) for i in range(1,len(self.taille))]
         if not input_parameters is None :
             self.weights = input_parameters[0]
             self.biases = input_parameters[1]
 
+        self.manual_stop = False
         self.accuracy = -1
         self.average_cost = -1
         self.total_generations = 0
@@ -52,6 +57,10 @@ class Reseau():
             return f"{minutes}min {seconds}s"
         hours, minutes = minutes // 60, minutes % 60
         return f"{hours}h {minutes}min"
+
+    def set_stop(self):
+        self.manual_stop = True
+
 
     def evaluate_accuracy(self,data=None,do_print=False):
         if data is None :
@@ -155,23 +164,58 @@ class Reseau():
 
 
 
-    def apprendre(self,DATA:[ [[float],[float]] ]=None,pas=10.0, data_shrink=1.0,data_number=None,precision=1.01,duration=999999,nb_generations=999999,CHECK_PROPORTION=0.1):
+    def apprendre(self,DATA:[ [[float],[float]] ]=None,pas=10.0, affichage_graphique=True, data_shrink=1.0,data_number=None,precision=1.01,duration=999999999,nb_generations=999999999,CHECK_PROPORTION=0.1):
         if DATA is None : DATA = self.stored_dataset
         if data_number is None : data_number = len(DATA)
         gen_count,start_time,elapsed_time, DATA,nb_seconds = 0,time(), 0, self.normalized(DATA),0
-        if duration == 999999 and nb_generations == 999999 : raise Exception("pas de fin d'apprentissage !")
+        if duration == 999999999 and nb_generations == 999999999 : raise Exception("pas de fin d'apprentissage !")
+
+        # Gère la partie affichage
+        if affichage_graphique == True :
+            window = ttk.Window()
+
+            gen_count_tk = tk.StringVar(value='0 générations')
+            av_cost_tk = tk.StringVar(value=f'coût moyen : {self.average_cost}')
+
+
+            global_frame = ttk.Frame(master=window)
+            global_frame.pack()
+
+            stop_button = ttk.Button(master=global_frame,text='stop',command= self.set_stop)
+            stop_button.pack()
+
+            gens_text = ttk.Label(master=global_frame,textvariable=gen_count_tk)
+            gens_text.pack()
+
+            av_cost_text = ttk.Label(master=global_frame,textvariable=av_cost_tk)
+            av_cost_text.pack()
+
+
+
+            window.update()
+
         def criteria_reached():
             nonlocal gen_count, elapsed_time,nb_seconds
             # if np.random.random() <= CHECK_PROPORTION :
             #     self.evaluate_accuracy(DATA)
             gen_count += 1
             elapsed_time = time() - start_time
-            if int(elapsed_time) > nb_seconds : # évalue l'accuracy 1 fois seulement par seconde
+            if int(elapsed_time) > nb_seconds : # mises à jour 1fois par seconde
                 nb_seconds = int(elapsed_time)
+                print(f'{nb_seconds}s passées')
                 self.evaluate_accuracy(DATA)
-                # print(f"accuracy à {nb_seconds}s : {self.accuracy}")
+                self.evaluate_cost(DATA)
+                if affichage_graphique :
+                    # gen_count_tk.set(f'{gen_count} générations')
+                    av_cost_tk.set(f'coût moyen : {self.average_cost}')
+                    pass
 
-            return gen_count >= nb_generations or elapsed_time >= duration
+            if affichage_graphique :
+                gen_count_tk.set(f'{gen_count} générations')
+
+                window.update()
+
+            return gen_count >= nb_generations or elapsed_time >= duration or self.manual_stop
 
         while not criteria_reached() :
 
@@ -187,15 +231,20 @@ class Reseau():
             # print(f"gen{gen_count} : gradient_weights=\n {G_global_W[1]}")
             # print(f"gen{gen_count} : gradient_biases=\n {G_global_B[1]}")
 
-
             self.weights = [arrW  +  pas * (-g_global_W) / len(data)    for arrW,g_global_W in zip(self.weights,G_global_W)]
             self.biases = [arrB + pas * (-g_global_B) / len(data)  for arrB, g_global_B in zip(self.biases,G_global_B)]
 
 
+
+        print('finished working !')
         # self.evaluate_accuracy(DATA)
+        self.manual_stop = False
         self.total_generations += gen_count
         self.total_duration += nb_seconds
         print(f'\nnb générations faites : {gen_count} ({self.total_generations}) | durée : {self.string_duration(elapsed_time)}')
+
+        if affichage_graphique :
+            window.mainloop()
 
 
 
