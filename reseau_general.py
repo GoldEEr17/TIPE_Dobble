@@ -9,11 +9,11 @@ import ttkbootstrap as ttk
 
 
 class Reseau():
-    def __init__(self,taille:[int],act_function='sigmoid',input_parameters=None,stored_dataset=[]):
+    def __init__(self,taille:[int],act_function='sigmoid',input_parameters=None,stored_dataset=[],symbols={}):
         self.taille = taille
         self.act_function = act_function
         self.stored_dataset = stored_dataset
-        self.symbols = {} # dictionnaire associant à chaque symbole (écrit en string) son nombre de représentations dans data_set
+        self.symbols = symbols # dictionnaire associant à chaque symbole (écrit en string) son nombre de représentations dans data_set
         self.weights = [[]] + [np.random.uniform(-3,3,(self.taille[i],self.taille[i-1])) for i in range(1,len(self.taille))]
         self.biases = [[]] + [np.random.uniform(-2,2,(self.taille[i],1)) for i in range(1,len(self.taille))]
         if not input_parameters is None :
@@ -61,6 +61,8 @@ class Reseau():
     def set_stop(self):
         self.manual_stop = True
 
+    def reset_everything(self):
+        self.__init__(taille=self.taille,stored_dataset=self.stored_dataset,symbols=self.symbols)
 
     def evaluate_accuracy(self,data=None,do_print=False):
         if data is None :
@@ -176,6 +178,7 @@ class Reseau():
 
             gen_count_tk = tk.StringVar(value='0 générations')
             av_cost_tk = tk.StringVar(value=f'coût moyen : {self.average_cost}')
+            duree_tk = tk.StringVar(value=self.string_duration(0))
 
 
             global_frame = ttk.Frame(master=window)
@@ -187,8 +190,12 @@ class Reseau():
             gens_text = ttk.Label(master=global_frame,textvariable=gen_count_tk)
             gens_text.pack()
 
+            duree_text = ttk.Label(master=global_frame,textvariable=duree_tk)
+            duree_text.pack()
+
             av_cost_text = ttk.Label(master=global_frame,textvariable=av_cost_tk)
             av_cost_text.pack()
+
 
 
 
@@ -208,11 +215,11 @@ class Reseau():
                 if affichage_graphique :
                     # gen_count_tk.set(f'{gen_count} générations')
                     av_cost_tk.set(f'coût moyen : {self.average_cost}')
+                    duree_tk.set(self.string_duration(elapsed_time))
                     pass
 
             if affichage_graphique :
                 gen_count_tk.set(f'{gen_count} générations')
-
                 window.update()
 
             return gen_count >= nb_generations or elapsed_time >= duration or self.manual_stop
